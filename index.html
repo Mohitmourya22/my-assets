@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture Pipeline Flowchart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            
+            --stage1-color: #0284c7;
+            --stage1-bg: rgba(2, 132, 199, 0.04);
+            
+            --stage2-color: #8b5cf6;
+            --stage2-bg: rgba(139, 92, 246, 0.04);
+            
+            --stage3-color: #f59e0b;
+            --stage3-border: #64748b;
+            --stage3-bg: #f8fafc;
+            
+            --stage4-color: #ef4444;
+            --stage4-bg: #fff1f2;
+            --teal-color: #0d9488;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .pipeline-container {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            padding: 45px 35px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            position: relative;
+        }
+
+        .stage-box {
+            width: 100%;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .stage-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .node-card {
+            background: var(--card-bg);
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 2;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .node-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Arrow Connector */
+        .arrow-down {
+            width: 2px;
+            height: 28px;
+            background-color: #94a3b8;
+            position: relative;
+            margin: 4px 0;
+            z-index: 1;
+        }
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -4px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid #94a3b8;
+        }
+
+        /* Stage 1 */
+        .stage-1 {
+            border: 2px solid var(--stage1-color);
+            background-color: var(--stage1-bg);
+            max-width: 520px;
+        }
+        .stage-1 .stage-title { color: var(--stage1-color); }
+        .stage-1 .node-card { border-color: var(--stage1-color); width: 100%; }
+
+        /* Stage 2 */
+        .stage-2 {
+            border: 2px solid var(--stage2-color);
+            background-color: var(--stage2-bg);
+            max-width: 560px;
+        }
+        .stage-2 .stage-title { color: var(--stage2-color); }
+        .stage-2 .node-card { border-color: var(--stage2-color); width: 100%; }
+
+        /* Stage 3 */
+        .stage-3 {
+            border: 1.5px solid var(--stage3-border);
+            background-color: var(--stage3-bg);
+            width: 100%;
+            max-width: 800px;
+            align-items: flex-end;
+            padding-right: 80px;
+        }
+        .stage-3 .stage-title { color: #334155; width: 100%; }
+        .stage-3 .node-card { border-color: var(--stage3-color); min-width: 340px; }
+
+        /* Stage 4 */
+        .stage-4 {
+            border: 1.5px solid var(--stage4-color);
+            background-color: var(--stage4-bg);
+            width: 100%;
+        }
+        .stage-4 .stage-title { color: var(--stage4-color); }
+        .stage-4 .main-node {
+            border-color: var(--stage4-color);
+            min-width: 320px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .dashboard-grid .node-card {
+            font-size: 0.82rem;
+            padding: 12px;
+            min-height: 60px;
+        }
+
+        /* SVG Line Connections for complex splits */
+        .split-connector {
+            width: 100%;
+            height: 40px;
+            margin: -10px 0;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stage-3 {
+                align-items: center;
+                padding-right: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="pipeline-container">
+
+    <!-- STAGE 1 -->
+    <div class="stage-box stage-1">
+        <div class="stage-title">STAGE 1: INPUT & PREPROCESSING[cite: 1]</div>
+        <div class="node-card">
+            <span>📊</span>
+            <div>Raw NWP Forecast+ 8 Meteorological Features<br><small style="color:var(--text-sub); font-weight:500">(Temp, Humidity, Wind, Pressure, etc.)</small></div>
+        </div>
+        <div class="arrow-down"></div>
+        <div class="node-card" style="max-width: 320px;">
+            <span>⚙️</span> StandardScaler Normalization[cite: 1]
+        </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- STAGE 2 -->
+    <div class="stage-box stage-2">
+        <div class="stage-title">STAGE 2: DYNAMIC REGIME DETECTION[cite: 1]</div>
+        <div class="node-card" style="max-width: 400px;">
+            <span>🧩</span> KMeans Clustering (k=3)<br>Monsoon Regime Identification[cite: 1]
+        </div>
+        <div class="arrow-down"></div>
+        <div class="node-card" style="max-width: 360px;">
+            <span>🏷️</span> Regime Labels (Break / Active / Depression)[cite: 1]
+        </div>
+        <div class="arrow-down"></div>
+        <div class="node-card">
+            <span>🔢</span> 16-Feature Matrix Generation<br><small style="color:var(--text-sub); font-weight:500">(Raw Data + One-Hot Encoded Regimes)</small>[cite: 1]
+        </div>
+    </div>
+
+    <!-- CONNECTOR FROM STAGE 2 TO STAGE 3 & 4 -->
+    <svg class="split-connector" viewBox="0 0 800 40" fill="none" stroke="#94a3b8" stroke-width="2">
+        <!-- Left line going to Stage 4 -->
+        <path d="M 320 0 C 320 20, 200 20, 200 40" marker-end="url(#arrow)" />
+        <!-- Right line going to Stage 3 -->
+        <path d="M 480 0 C 480 20, 600 20, 600 40" marker-end="url(#arrow)" />
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+            </marker>
+        </defs>
+    </svg>
+
+    <!-- STAGE 3 -->
+    <div class="stage-box stage-3">
+        <div class="stage-title">STAGE 3: DUAL-MODEL INFERENCE PIPELINE[cite: 1]</div>
+        <div class="node-card">
+            <span>⚠️</span> Branch B: Random Forest Classifier[cite: 1]
+        </div>
+        <div class="arrow-down" style="margin-right: 160px;"></div>
+        <div class="node-card">
+            <span>🚨</span> Heavy Rain Probability (%)<br><small style="color:var(--text-sub); font-weight:500">Threshold ≥ 64.5mm</small>[cite: 1]
+        </div>
+    </div>
+
+    <!-- CONNECTOR FROM STAGE 3 & DIRECT BRANCH TO STAGE 4 -->
+    <svg class="split-connector" viewBox="0 0 800 40" fill="none" stroke="#94a3b8" stroke-width="2">
+        <path d="M 200 0 L 200 20 C 200 35, 360 35, 360 40" marker-end="url(#arrow)" />
+        <path d="M 600 0 L 600 20 C 600 35, 440 35, 440 40" marker-end="url(#arrow)" />
+    </svg>
+
+    <!-- STAGE 4 -->
+    <div class="stage-box stage-4">
+        <div class="stage-title">STAGE 4: DASHBOARD UI & EXPLAINABILITY[cite: 1]</div>
+        <div class="node-card main-node">
+            <span>🖥️</span> Streamlit Interactive Dashboard[cite: 1]
+        </div>
+
+        <div class="arrow-down"></div>
+
+        <div class="dashboard-grid">
+            <div class="node-card" style="border-color: var(--stage1-color);">
+                <span>🔊</span> Meta MMS-TTS<br><small>(Multilingual Voice Readout)</small>[cite: 1]
+            </div>
+            <div class="node-card" style="border-color: var(--stage3-color);">
+                <span>🔍</span> SHAP TreeExplainer<br><small>(Feature Attribution)</small>[cite: 1]
+            </div>
+            <div class="node-card" style="border-color: var(--stage2-color);">
+                <span>🚦</span> Color Alert System<br><small>(Green / Orange / Red)</small>[cite: 1]
+            </div>
+            <div class="node-card" style="border-color: var(--teal-color);">
+                <span>🗺️</span> CARTO / OpenStreetMap<br><small>Spatial Layer</small>[cite: 1]
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
