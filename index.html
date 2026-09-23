@@ -2,7 +2,7 @@
 <html lang="en" class="h-full">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>System Architecture Pipeline Flowchart</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,404 +10,336 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script>
   tailwind.config = {
-    darkMode: 'class',
     theme: { extend: { fontFamily: { sans: ['Roboto', 'sans-serif'] } } }
   }
 </script>
 <style>
-  body { margin:0; padding:0; overflow:hidden; user-select:none; font-family:'Roboto',sans-serif; }
+  html, body { margin:0; padding:0; height:100%; font-family:'Roboto',sans-serif; }
+  body { -webkit-tap-highlight-color: transparent; }
+
   .connector-path { transition: stroke 0.25s ease, stroke-width 0.2s ease; }
   .connector-path:hover { stroke-width: 3.2px !important; filter: drop-shadow(0 0 5px rgba(59,130,246,0.65)); }
+
   #toast { transition: opacity 0.3s ease, transform 0.3s ease; }
   .node-element { transition: transform 0.15s ease; }
   .node-element:hover { transform: translateY(-1.5px); }
 
-  /* Keep labels readable when the tall flowchart is fit to the viewport. */
-  #flowchartSvg text[font-size="13"] { font-size: 19px !important; }
-  #flowchartSvg text[font-size="13.5"] { font-size: 20px !important; }
-  #flowchartSvg text[font-size="14"] { font-size: 21px !important; }
-  #flowchartSvg text[font-size="15"] { font-size: 22px !important; }
-  #flowchartSvg text[font-size="11"] { font-size: 17px !important; }
-  #flowchartSvg text[font-size="11.5"] { font-size: 17px !important; }
-  #flowchartSvg .compact-label { font-size: 18px !important; }
+  /* Keep labels readable across screen sizes */
+  #flowchartSvg text[font-size="13"] { font-size: 19px; }
+  #flowchartSvg text[font-size="13.5"] { font-size: 20px; }
+  #flowchartSvg text[font-size="14"] { font-size: 21px; }
+  #flowchartSvg text[font-size="15"] { font-size: 22px; }
+  #flowchartSvg text[font-size="11"] { font-size: 17px; }
+  #flowchartSvg text[font-size="11.5"] { font-size: 17px; }
+  #flowchartSvg .compact-label { font-size: 18px; }
+
+  /* Scroll container: on small screens the tall diagram scrolls vertically
+     and can be pinch-zoomed / panned instead of being squashed unreadably. */
+  #svgScroll {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  #flowchartSvg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 1100px;
+  }
+
+  /* On larger screens (tablet landscape and up) let the diagram fit the
+     available height instead of forcing a vertical scrollbar. */
+  @media (min-width: 768px) {
+    #svgScroll { align-items: center; }
+    #flowchartSvg { width: auto; height: 100%; max-height: 100%; }
+  }
 </style>
 </head>
-<body class="h-full bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-100 font-sans flex flex-col transition-colors duration-300">
+<body class="h-full bg-gradient-to-b from-slate-100 to-slate-200 text-slate-900 flex flex-col">
 
-  <header class="h-14 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between z-20 shadow-sm flex-shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="p-1.5 bg-gradient-to-br from-sky-400 to-blue-600 text-white rounded-lg shadow-md shadow-blue-500/30">
+  <header class="h-14 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200 px-3 sm:px-4 flex items-center justify-between z-20 shadow-sm flex-shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div class="p-1.5 bg-gradient-to-br from-sky-400 to-blue-600 text-white rounded-lg shadow-md shadow-blue-500/30 flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
         </svg>
       </div>
-      <h1 class="font-bold text-base md:text-lg tracking-tight">System Architecture Pipeline</h1>
+      <h1 class="font-bold text-sm sm:text-base md:text-lg tracking-tight truncate">System Architecture Pipeline</h1>
     </div>
 
-    <div class="flex items-center gap-2 md:gap-3 text-xs md:text-sm">
-      <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 hover:brightness-105 transition flex items-center gap-1.5 font-medium shadow-sm">
-        <span id="themeIcon">🌙</span>
-        <span id="themeLabel" class="hidden sm:inline">Dark Mode</span>
-      </button>
-
-      <button onclick="resetZoom()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 hover:brightness-105 transition font-medium hidden sm:flex items-center gap-1 shadow-sm">
+    <div class="flex items-center gap-2 md:gap-3 text-xs md:text-sm flex-shrink-0">
+      <button onclick="resetZoom()" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 bg-gradient-to-b from-slate-50 to-slate-100 hover:brightness-105 transition font-medium hidden sm:flex items-center gap-1 shadow-sm">
         🔍 Fit Screen
       </button>
 
-      <button onclick="downloadSVG()" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-medium transition flex items-center gap-1.5 shadow-md shadow-blue-600/30">
+      <button onclick="downloadSVG()" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-medium transition flex items-center gap-1.5 shadow-md shadow-blue-600/30">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
         </svg>
-        <span>Export SVG</span>
+        <span class="hidden xs:inline sm:inline">Export SVG</span>
       </button>
     </div>
   </header>
 
-  <main id="svgContainer" class="flex-1 w-full h-[calc(100vh-3.5rem)] relative overflow-hidden bg-transparent flex items-center justify-center p-2 md:p-4">
+  <main id="svgContainer" class="flex-1 w-full relative bg-transparent p-2 md:p-4 min-h-0">
 
-    <div class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[180px] text-center text-slate-500/70 dark:text-slate-400/70 font-bold text-sm md:text-base leading-tight tracking-wide">
+    <div class="hidden lg:block absolute left-4 md:left-8 top-1/2 -translate-y-1/2 max-w-[180px] text-center text-slate-500/70 font-bold text-sm md:text-base leading-tight tracking-wide pointer-events-none z-10">
       End-to-End AI System Pipeline
     </div>
 
-    <svg id="flowchartSvg" viewBox="0 0 1100 1260" preserveAspectRatio="xMidYMid meet" class="w-full h-full max-h-full max-w-full transition-all duration-300">
-      <defs>
-        <marker id="arrow-light" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#334155" />
-        </marker>
-        <marker id="arrow-dark" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#cbd5e1" />
-        </marker>
+    <div id="svgScroll">
+      <svg id="flowchartSvg" viewBox="0 0 1100 1260" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-light" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#334155" />
+          </marker>
 
-        <filter id="nodeShadow" x="-15%" y="-15%" width="130%" height="140%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.16"/>
-        </filter>
-        <filter id="nodeShadowDark" x="-15%" y="-15%" width="130%" height="140%">
-          <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.5"/>
-        </filter>
-        <filter id="stageShadow" x="-5%" y="-5%" width="110%" height="115%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.10"/>
-        </filter>
+          <filter id="nodeShadow" x="-15%" y="-15%" width="130%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.16"/>
+          </filter>
+          <filter id="stageShadow" x="-5%" y="-5%" width="110%" height="115%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.10"/>
+          </filter>
 
-        <!-- Glossy node gradient (light) -->
-        <linearGradient id="nodeGlossLight" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#ffffff"/>
-          <stop offset="55%" stop-color="#ffffff"/>
-          <stop offset="100%" stop-color="#eef2f7"/>
-        </linearGradient>
-        <linearGradient id="nodeGlossDark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#1e2530"/>
-          <stop offset="100%" stop-color="#0f172a"/>
-        </linearGradient>
+          <linearGradient id="nodeGlossLight" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="55%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#eef2f7"/>
+          </linearGradient>
 
-        <!-- Stage backgrounds: soft diagonal glass gradients -->
-        <linearGradient id="stage1Grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#e0f4ff"/>
-          <stop offset="100%" stop-color="#c9ecff"/>
-        </linearGradient>
-        <linearGradient id="stage1GradDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#0c2436"/>
-          <stop offset="100%" stop-color="#081925"/>
-        </linearGradient>
+          <linearGradient id="stage1Grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#e0f4ff"/>
+            <stop offset="100%" stop-color="#c9ecff"/>
+          </linearGradient>
 
-        <linearGradient id="stage2Grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#f1e6ff"/>
-          <stop offset="100%" stop-color="#e6d3ff"/>
-        </linearGradient>
-        <linearGradient id="stage2GradDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#241a35"/>
-          <stop offset="100%" stop-color="#1a1327"/>
-        </linearGradient>
+          <linearGradient id="stage2Grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f1e6ff"/>
+            <stop offset="100%" stop-color="#e6d3ff"/>
+          </linearGradient>
 
-        <linearGradient id="stage3Grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#f2f4f6"/>
-          <stop offset="100%" stop-color="#e2e7ec"/>
-        </linearGradient>
-        <linearGradient id="stage3GradDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#1c2530"/>
-          <stop offset="100%" stop-color="#141b24"/>
-        </linearGradient>
+          <linearGradient id="stage3Grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f2f4f6"/>
+            <stop offset="100%" stop-color="#e2e7ec"/>
+          </linearGradient>
 
-        <linearGradient id="stage4Grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#ffe4e4"/>
-          <stop offset="100%" stop-color="#ffd2d2"/>
-        </linearGradient>
-        <linearGradient id="stage4GradDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#331314"/>
-          <stop offset="100%" stop-color="#260d0e"/>
-        </linearGradient>
+          <linearGradient id="stage4Grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ffe4e4"/>
+            <stop offset="100%" stop-color="#ffd2d2"/>
+          </linearGradient>
+        </defs>
 
-        <!-- Branch accent gradients -->
-        <linearGradient id="branchAGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#00c9a7"/>
-          <stop offset="100%" stop-color="#00a88f"/>
-        </linearGradient>
-        <linearGradient id="branchBGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#ffb74d"/>
-          <stop offset="100%" stop-color="#f59e0b"/>
-        </linearGradient>
-      </defs>
+        <!-- ==================== STAGE 1: INPUT & PREPROCESSING ==================== -->
+        <g id="stage1_group">
+          <rect x="200" y="20" width="700" height="180" rx="14" filter="url(#stageShadow)"
+                fill="url(#stage1Grad)" stroke="#0084c6" stroke-width="1.8" />
+          <text x="550" y="42" text-anchor="middle" font-weight="700" font-size="13"
+                fill="#006faa" letter-spacing="1">STAGE 1: INPUT &amp; PREPROCESSING</text>
 
-      <!-- ==================== STAGE 1: INPUT & PREPROCESSING ==================== -->
-      <g id="stage1_group">
-        <rect x="200" y="20" width="700" height="180" rx="14" filter="url(#stageShadow)"
-              class="fill-[url(#stage1Grad)] dark:fill-[url(#stage1GradDark)] stroke-[#0084c6] dark:stroke-sky-500"
-              stroke-width="1.8" />
-        <text x="550" y="42" text-anchor="middle" font-weight="700" font-size="13"
-              class="fill-[#006faa] dark:fill-sky-400 tracking-wider">STAGE 1: INPUT &amp; PREPROCESSING</text>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="225" y="55" width="650" height="55" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#0084c6] dark:stroke-sky-500" stroke-width="1.6" />
-          <text x="550" y="76" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-            📊 Raw NWP Forecast + 8 Meteorological Features
-          </text>
-          <text x="550" y="93" text-anchor="middle" font-size="11.5" class="fill-slate-600 dark:fill-slate-400">
-            (Temp, Humidity, Wind, Pressure, etc.)
-          </text>
-        </g>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="360" y="130" width="380" height="50" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#0084c6] dark:stroke-sky-500" stroke-width="1.6" />
-          <text x="550" y="157" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-            ⚙️ StandardScaler Normalization
-          </text>
-        </g>
-
-        <path d="M 550 105 L 550 128"
-              class="connector-path stroke-slate-700 dark:stroke-slate-300"
-              stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-      </g>
-
-      <path d="M 550 175 L 550 223"
-            class="connector-path stroke-slate-700 dark:stroke-slate-300"
-            stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-
-      <!-- ==================== STAGE 2: DYNAMIC REGIME DETECTION ==================== -->
-      <g id="stage2_group">
-        <rect x="200" y="225" width="700" height="270" rx="14" filter="url(#stageShadow)"
-              class="fill-[url(#stage2Grad)] dark:fill-[url(#stage2GradDark)] stroke-[#8a2be2] dark:stroke-purple-400"
-              stroke-width="1.8" />
-        <text x="550" y="247" text-anchor="middle" font-weight="700" font-size="13"
-              class="fill-[#7c1fd4] dark:fill-purple-400 tracking-wider">STAGE 2: DYNAMIC REGIME DETECTION</text>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="300" y="260" width="500" height="55" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#8a2be2] dark:stroke-purple-400" stroke-width="1.6" />
-          <text x="550" y="280" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-            🧩 KMeans Clustering (k=3)
-          </text>
-          <text x="550" y="298" text-anchor="middle" font-size="11.5" class="fill-slate-600 dark:fill-slate-400">
-            Monsoon Regime Identification
-          </text>
-        </g>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="330" y="330" width="440" height="50" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#8a2be2] dark:stroke-purple-400" stroke-width="1.6" />
-          <text x="550" y="357" text-anchor="middle" font-weight="700" font-size="13.5" class="fill-slate-900 dark:fill-slate-100">
-            🏷️ Regime Labels (Break / Active / Depression)
-          </text>
-        </g>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="260" y="395" width="580" height="57" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#8a2be2] dark:stroke-purple-400" stroke-width="1.6" />
-          <text x="550" y="416" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-            🔢 16-Feature Matrix Generation
-          </text>
-          <text x="550" y="434" text-anchor="middle" font-size="11.5" class="fill-slate-600 dark:fill-slate-400">
-            (Raw Data + One-Hot Encoded Regimes)
-          </text>
-        </g>
-
-        <path d="M 550 310 L 550 328" class="connector-path stroke-slate-700 dark:stroke-slate-300" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-        <path d="M 550 375 L 550 393" class="connector-path stroke-slate-700 dark:stroke-slate-300" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-      </g>
-
-      <path d="M 550 447 C 550 515, 320 495, 320 558"
-            class="connector-path stroke-slate-700 dark:stroke-slate-300"
-            stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-
-      <path d="M 550 447 C 550 515, 780 495, 780 558"
-            class="connector-path stroke-slate-700 dark:stroke-slate-300"
-            stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-
-      <!-- ==================== STAGE 3: DUAL-MODEL INFERENCE PIPELINE ==================== -->
-      <g id="stage3_group">
-        <rect x="80" y="515" width="940" height="270" rx="14" filter="url(#stageShadow)"
-              class="fill-[url(#stage3Grad)] dark:fill-[url(#stage3GradDark)] stroke-[#5b6770] dark:stroke-slate-500"
-              stroke-width="1.8" />
-        <text x="550" y="537" text-anchor="middle" font-weight="700" font-size="13"
-              class="fill-[#475059] dark:fill-slate-300 tracking-wider">STAGE 3: DUAL-MODEL INFERENCE PIPELINE</text>
-
-        <g id="branchA_group">
           <g class="node-element" filter="url(#nodeShadow)">
-            <rect x="125" y="560" width="390" height="52" rx="9"
-                  class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#00a88f] dark:stroke-teal-400" stroke-width="1.6" />
-            <text x="320" y="589" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-              📈 Branch A: XGBoost Regressor
+            <rect x="225" y="55" width="650" height="55" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#0084c6" stroke-width="1.6" />
+            <text x="550" y="76" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+              📊 Raw NWP Forecast + 8 Meteorological Features
+            </text>
+            <text x="550" y="93" text-anchor="middle" font-size="11.5" fill="#475569">
+              (Temp, Humidity, Wind, Pressure, etc.)
             </text>
           </g>
 
           <g class="node-element" filter="url(#nodeShadow)">
-            <rect x="110" y="648" width="420" height="60" rx="9"
-                  class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#00a88f] dark:stroke-teal-400" stroke-width="1.6" />
-            <text x="320" y="670" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-              🔮 Corrected Rainfall Forecast (mm)
-            </text>
-            <text x="320" y="689" text-anchor="middle" font-size="11.5" class="fill-slate-600 dark:fill-slate-400">
-              Non-linear Bias Correction
+            <rect x="360" y="130" width="380" height="50" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#0084c6" stroke-width="1.6" />
+            <text x="550" y="157" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+              ⚙️ StandardScaler Normalization
             </text>
           </g>
 
-          <path d="M 320 608 L 320 646" class="connector-path stroke-slate-700 dark:stroke-slate-300" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <path d="M 550 105 L 550 128" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
         </g>
 
-        <g id="branchB_group">
-          <g class="node-element" filter="url(#nodeShadow)">
-            <rect x="585" y="560" width="390" height="52" rx="9"
-                  class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#f59e0b] dark:stroke-amber-400" stroke-width="1.6" />
-            <text x="780" y="589" text-anchor="middle" textLength="330" lengthAdjust="spacingAndGlyphs" font-weight="700" font-size="14" class="compact-label fill-slate-900 dark:fill-slate-100">
-              ⚠️ Branch B: Random Forest Classifier
-            </text>
-          </g>
+        <path d="M 550 175 L 550 223" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+
+        <!-- ==================== STAGE 2: DYNAMIC REGIME DETECTION ==================== -->
+        <g id="stage2_group">
+          <rect x="200" y="225" width="700" height="270" rx="14" filter="url(#stageShadow)"
+                fill="url(#stage2Grad)" stroke="#8a2be2" stroke-width="1.8" />
+          <text x="550" y="247" text-anchor="middle" font-weight="700" font-size="13"
+                fill="#7c1fd4" letter-spacing="1">STAGE 2: DYNAMIC REGIME DETECTION</text>
 
           <g class="node-element" filter="url(#nodeShadow)">
-            <rect x="570" y="648" width="420" height="60" rx="9"
-                  class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#f59e0b] dark:stroke-amber-400" stroke-width="1.6" />
-            <text x="780" y="670" text-anchor="middle" font-weight="700" font-size="14" class="fill-slate-900 dark:fill-slate-100">
-              🚨 Heavy Rain Probability (%)
+            <rect x="300" y="260" width="500" height="55" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#8a2be2" stroke-width="1.6" />
+            <text x="550" y="280" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+              🧩 KMeans Clustering (k=3)
             </text>
-            <text x="780" y="689" text-anchor="middle" font-size="11.5" class="fill-slate-600 dark:fill-slate-400">
-              Threshold ≥ 64.5mm
+            <text x="550" y="298" text-anchor="middle" font-size="11.5" fill="#475569">
+              Monsoon Regime Identification
             </text>
           </g>
 
-          <path d="M 780 608 L 780 646" class="connector-path stroke-slate-700 dark:stroke-slate-300" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-        </g>
-      </g>
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="330" y="330" width="440" height="50" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#8a2be2" stroke-width="1.6" />
+            <text x="550" y="357" text-anchor="middle" font-weight="700" font-size="13.5" fill="#0f172a">
+              🏷️ Regime Labels (Break / Active / Depression)
+            </text>
+          </g>
 
-      <path d="M 320 703 C 320 785, 550 765, 550 843"
-            class="connector-path stroke-slate-700 dark:stroke-slate-300"
-            stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="260" y="395" width="580" height="57" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#8a2be2" stroke-width="1.6" />
+            <text x="550" y="416" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+              🔢 16-Feature Matrix Generation
+            </text>
+            <text x="550" y="434" text-anchor="middle" font-size="11.5" fill="#475569">
+              (Raw Data + One-Hot Encoded Regimes)
+            </text>
+          </g>
 
-      <path d="M 780 703 C 780 785, 550 765, 550 843"
-            class="connector-path stroke-slate-700 dark:stroke-slate-300"
-            stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
-
-      <!-- ==================== STAGE 4: DASHBOARD UI & EXPLAINABILITY ==================== -->
-      <g id="stage4_group">
-        <rect x="30" y="810" width="1040" height="395" rx="14" filter="url(#stageShadow)"
-              class="fill-[url(#stage4Grad)] dark:fill-[url(#stage4GradDark)] stroke-[#d9383a] dark:stroke-rose-500"
-              stroke-width="1.8" />
-        <text x="550" y="832" text-anchor="middle" font-weight="700" font-size="13"
-              class="fill-[#c22326] dark:fill-rose-400 tracking-wider">STAGE 4: DASHBOARD UI &amp; EXPLAINABILITY</text>
-
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="330" y="845" width="440" height="55" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#d9383a] dark:stroke-rose-500" stroke-width="1.8" />
-          <text x="550" y="875" text-anchor="middle" font-weight="700" font-size="15" class="fill-slate-900 dark:fill-slate-100">
-            🖥️ Streamlit Interactive Dashboard
-          </text>
+          <path d="M 550 310 L 550 328" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <path d="M 550 375 L 550 393" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
         </g>
 
-        <path d="M 550 895 C 550 945, 175 930, 175 978"
-              class="connector-path stroke-slate-700 dark:stroke-slate-300"
-              stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+        <path d="M 550 447 C 550 515, 320 495, 320 558" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+        <path d="M 550 447 C 550 515, 780 495, 780 558" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
 
-        <path d="M 550 895 C 550 945, 425 930, 425 978"
-              class="connector-path stroke-slate-700 dark:stroke-slate-300"
-              stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+        <!-- ==================== STAGE 3: DUAL-MODEL INFERENCE PIPELINE ==================== -->
+        <g id="stage3_group">
+          <rect x="80" y="515" width="940" height="270" rx="14" filter="url(#stageShadow)"
+                fill="url(#stage3Grad)" stroke="#5b6770" stroke-width="1.8" />
+          <text x="550" y="537" text-anchor="middle" font-weight="700" font-size="13"
+                fill="#475059" letter-spacing="1">STAGE 3: DUAL-MODEL INFERENCE PIPELINE</text>
 
-        <path d="M 550 895 C 550 945, 675 930, 675 978"
-              class="connector-path stroke-slate-700 dark:stroke-slate-300"
-              stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <g id="branchA_group">
+            <g class="node-element" filter="url(#nodeShadow)">
+              <rect x="125" y="560" width="390" height="52" rx="9"
+                    fill="url(#nodeGlossLight)" stroke="#00a88f" stroke-width="1.6" />
+              <text x="320" y="589" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+                📈 Branch A: XGBoost Regressor
+              </text>
+            </g>
 
-        <path d="M 550 895 C 550 945, 925 930, 925 978"
-              class="connector-path stroke-slate-700 dark:stroke-slate-300"
-              stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+            <g class="node-element" filter="url(#nodeShadow)">
+              <rect x="110" y="648" width="420" height="60" rx="9"
+                    fill="url(#nodeGlossLight)" stroke="#00a88f" stroke-width="1.6" />
+              <text x="320" y="670" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+                🔮 Corrected Rainfall Forecast (mm)
+              </text>
+              <text x="320" y="689" text-anchor="middle" font-size="11.5" fill="#475569">
+                Non-linear Bias Correction
+              </text>
+            </g>
 
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="55" y="980" width="240" height="74" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#0084c6] dark:stroke-sky-400" stroke-width="1.6" />
-          <text x="175" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" class="fill-slate-900 dark:fill-slate-100">
-            🔊 Meta MMS-TTS
-          </text>
-          <text x="175" y="1028" text-anchor="middle" font-size="11" class="fill-slate-600 dark:fill-slate-400">
-            (Multilingual Voice Readout)
-          </text>
+            <path d="M 320 608 L 320 646" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          </g>
+
+          <g id="branchB_group">
+            <g class="node-element" filter="url(#nodeShadow)">
+              <rect x="585" y="560" width="390" height="52" rx="9"
+                    fill="url(#nodeGlossLight)" stroke="#f59e0b" stroke-width="1.6" />
+              <text x="780" y="589" text-anchor="middle" textLength="330" lengthAdjust="spacingAndGlyphs" font-weight="700" font-size="14" class="compact-label" fill="#0f172a">
+                ⚠️ Branch B: Random Forest Classifier
+              </text>
+            </g>
+
+            <g class="node-element" filter="url(#nodeShadow)">
+              <rect x="570" y="648" width="420" height="60" rx="9"
+                    fill="url(#nodeGlossLight)" stroke="#f59e0b" stroke-width="1.6" />
+              <text x="780" y="670" text-anchor="middle" font-weight="700" font-size="14" fill="#0f172a">
+                🚨 Heavy Rain Probability (%)
+              </text>
+              <text x="780" y="689" text-anchor="middle" font-size="11.5" fill="#475569">
+                Threshold ≥ 64.5mm
+              </text>
+            </g>
+
+            <path d="M 780 608 L 780 646" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          </g>
         </g>
 
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="305" y="980" width="240" height="74" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#f59e0b] dark:stroke-amber-400" stroke-width="1.6" />
-          <text x="425" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" class="fill-slate-900 dark:fill-slate-100">
-            🔍 SHAP TreeExplainer
-          </text>
-          <text x="425" y="1028" text-anchor="middle" font-size="11" class="fill-slate-600 dark:fill-slate-400">
-            (Feature Attribution)
-          </text>
-        </g>
+        <path d="M 320 703 C 320 785, 550 765, 550 843" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+        <path d="M 780 703 C 780 785, 550 765, 550 843" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
 
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="555" y="980" width="240" height="74" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#8a2be2] dark:stroke-purple-400" stroke-width="1.6" />
-          <text x="675" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" class="fill-slate-900 dark:fill-slate-100">
-            🚦 Color Alert System
-          </text>
-          <text x="675" y="1028" text-anchor="middle" font-size="11" class="fill-slate-600 dark:fill-slate-400">
-            (Green / Orange / Red)
-          </text>
-        </g>
+        <!-- ==================== STAGE 4: DASHBOARD UI & EXPLAINABILITY ==================== -->
+        <g id="stage4_group">
+          <rect x="30" y="810" width="1040" height="395" rx="14" filter="url(#stageShadow)"
+                fill="url(#stage4Grad)" stroke="#d9383a" stroke-width="1.8" />
+          <text x="550" y="832" text-anchor="middle" font-weight="700" font-size="13"
+                fill="#c22326" letter-spacing="1">STAGE 4: DASHBOARD UI &amp; EXPLAINABILITY</text>
 
-        <g class="node-element" filter="url(#nodeShadow)">
-          <rect x="805" y="980" width="240" height="74" rx="9"
-                class="fill-[url(#nodeGlossLight)] dark:fill-[url(#nodeGlossDark)] stroke-[#00a88f] dark:stroke-teal-400" stroke-width="1.6" />
-          <text x="925" y="1008" text-anchor="middle" textLength="210" lengthAdjust="spacingAndGlyphs" font-weight="700" font-size="13.5" class="compact-label fill-slate-900 dark:fill-slate-100">
-            🗺️ CARTO / OpenStreetMap
-          </text>
-          <text x="925" y="1028" text-anchor="middle" font-size="11" class="fill-slate-600 dark:fill-slate-400">
-            Spatial Layer
-          </text>
-        </g>
-      </g>
-    </svg>
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="330" y="845" width="440" height="55" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#d9383a" stroke-width="1.8" />
+            <text x="550" y="875" text-anchor="middle" font-weight="700" font-size="15" fill="#0f172a">
+              🖥️ Streamlit Interactive Dashboard
+            </text>
+          </g>
 
-    <div id="toast" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 z-50">
+          <path d="M 550 895 C 550 945, 175 930, 175 978" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <path d="M 550 895 C 550 945, 425 930, 425 978" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <path d="M 550 895 C 550 945, 675 930, 675 978" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+          <path d="M 550 895 C 550 945, 925 930, 925 978" class="connector-path" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arrow-light)" />
+
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="55" y="980" width="240" height="74" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#0084c6" stroke-width="1.6" />
+            <text x="175" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" fill="#0f172a">
+              🔊 Meta MMS-TTS
+            </text>
+            <text x="175" y="1028" text-anchor="middle" font-size="11" fill="#475569">
+              (Multilingual Voice Readout)
+            </text>
+          </g>
+
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="305" y="980" width="240" height="74" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#f59e0b" stroke-width="1.6" />
+            <text x="425" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" fill="#0f172a">
+              🔍 SHAP TreeExplainer
+            </text>
+            <text x="425" y="1028" text-anchor="middle" font-size="11" fill="#475569">
+              (Feature Attribution)
+            </text>
+          </g>
+
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="555" y="980" width="240" height="74" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#8a2be2" stroke-width="1.6" />
+            <text x="675" y="1008" text-anchor="middle" font-weight="700" font-size="13.5" fill="#0f172a">
+              🚦 Color Alert System
+            </text>
+            <text x="675" y="1028" text-anchor="middle" font-size="11" fill="#475569">
+              (Green / Orange / Red)
+            </text>
+          </g>
+
+          <g class="node-element" filter="url(#nodeShadow)">
+            <rect x="805" y="980" width="240" height="74" rx="9"
+                  fill="url(#nodeGlossLight)" stroke="#00a88f" stroke-width="1.6" />
+            <text x="925" y="1008" text-anchor="middle" textLength="210" lengthAdjust="spacingAndGlyphs" font-weight="700" font-size="13.5" class="compact-label" fill="#0f172a">
+              🗺️ CARTO / OpenStreetMap
+            </text>
+            <text x="925" y="1028" text-anchor="middle" font-size="11" fill="#475569">
+              Spatial Layer
+            </text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div id="toast" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 z-50">
       Notification
     </div>
   </main>
 
 <script>
-  let currentTheme = 'light';
-
-  function toggleTheme() {
-    const html = document.documentElement;
-    const themeIcon = document.getElementById('themeIcon');
-    const themeLabel = document.getElementById('themeLabel');
-    const arrowPaths = document.querySelectorAll('#arrow-light path');
-
-    if (currentTheme === 'light') {
-      html.classList.add('dark');
-      themeIcon.innerText = '☀️';
-      themeLabel.innerText = 'Light Mode';
-      currentTheme = 'dark';
-      arrowPaths.forEach(p => p.setAttribute('fill', '#cbd5e1'));
-      showToast('Dark Mode Enabled');
-    } else {
-      html.classList.remove('dark');
-      themeIcon.innerText = '🌙';
-      themeLabel.innerText = 'Dark Mode';
-      currentTheme = 'light';
-      arrowPaths.forEach(p => p.setAttribute('fill', '#334155'));
-      showToast('Light Mode Enabled');
-    }
-  }
-
   function resetZoom() {
-    const svg = document.getElementById('flowchartSvg');
-    svg.style.transform = 'scale(1)';
+    const scroll = document.getElementById('svgScroll');
+    scroll.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     showToast('View reset to fit screen');
   }
 
@@ -415,7 +347,7 @@
     try {
       const svgElement = document.getElementById('flowchartSvg');
       const clonedSvg = svgElement.cloneNode(true);
-      clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
       const svgData = new XMLSerializer().serializeToString(clonedSvg);
       const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
@@ -431,7 +363,7 @@
 
       showToast('SVG Flowchart downloaded successfully!');
     } catch (err) {
-      console.error("Export error: ", err);
+      console.error('Export error: ', err);
       showToast('Failed to export SVG.');
     }
   }
@@ -447,11 +379,6 @@
       toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
     }, 2500);
   }
-
-  window.addEventListener('resize', () => {
-    const svg = document.getElementById('flowchartSvg');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  });
 </script>
 </body>
 </html>
